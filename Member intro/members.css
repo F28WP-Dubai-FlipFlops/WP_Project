@@ -1,0 +1,38 @@
+#container {
+margin: 0 auto;
+position: relative;
+}
+
+#content {
+    margin: 0 auto;
+    float: none;
+    overflow: hidden;
+}
+
+#profile {
+    float: none;
+    display: block;
+    width: 80%;
+}
+
+#meminfo {
+    width: auto;
+    border: 2px solid black;
+    height: auto;
+}
+
+#gamedesc {
+    width: auto;
+    height: auto;
+    background-color: cornsilk;
+}
+
+#upperhead {
+    float: right;
+    background-color: darksalmon;
+}
+
+#head {
+    
+    background-color: darkseagreen;
+}
