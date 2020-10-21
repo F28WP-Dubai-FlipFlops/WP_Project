@@ -9,3 +9,7 @@ This is a space-themed game where each player controls a spaceship equipped with
 
 ## Our Webpage
 file:///C:/Users/varun/Documents/GitHub/WP_Project/Member%20intro/members.html
+
+## Game Mockup
+
+![Mockup Image](/THiS.png)
