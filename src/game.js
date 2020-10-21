@@ -12,7 +12,6 @@ let player = {
   width: 30, 
   height: 30, 
   
-  // Player at centre of game screen
   position: {
     x: 0, 
     y: 0
@@ -25,36 +24,78 @@ let player = {
 }
 
 
+let laserShots = [];    // Array for all laserShot objects
+let laserShotsDivs = [];    // Array for all divs representing laserShots
+
+// Constructor function for LaserShot object; used to represent laser shots in js
+function LaserShot() {
+  this.width = 8;
+  this.height = 8;
+
+  // Generate laser from centre of player div
+  this.position = {
+    x: player.position.x + player.width - this.width/2, 
+    y: player.position.y + player.height/2 - this.height/2
+  }
+
+  this.velocity = {
+    x: 0, 
+    y: 0
+  }
+}
+
+// Method to create new laser shot and add to html
+LaserShot.prototype.createShot = function() {
+  let shot = document.createElement('div');
+  shot.setAttribute('class', 'laser');
+  gameScreen.appendChild(shot);
+  laserShotsDivs.push(shot);
+}
+
+
 // Controller class to hande player input
 playerController = {
   up: false, 
   down: false, 
   left: false, 
   right: false, 
+  shoot: false, 
 
   keyListener: function(keyEvent) {
-    let keyState = (keyEvent.type == "keydown")? true: false;
+    let keyState = (keyEvent.type === "keydown")? true: false;
+
+    if (keyEvent.keyCode === 32) {
+      playerController.shoot = keyState;
+      console.log("shoot");
+    }
 
     switch (keyEvent.keyCode) {
       case 37:
+      case 65:
         playerController.left = keyState;
         console.log("left");
         break;
+
       case 38:
+      case 87:
         playerController.up = keyState;
         console.log("up");
         break;
+
       case 39:
+      case 68:
         playerController.right = keyState;
         console.log("right");
         break;
+
       case 40:
+      case 83:
         playerController.down = keyState;
         console.log("down");
         break;
     }
 
-    if([37, 38, 39, 40].indexOf(keyEvent.keyCode) != 1) {
+    if([32, 37, 38, 39, 40, 65, 68, 83, 87].indexOf(keyEvent.keyCode) != 1) {
         keyEvent.preventDefault();
     }
   }
@@ -109,6 +150,38 @@ let gameLoop = function() {
   // Move player on the game screen
   playerDiv.style.left = player.position.x + "px";
   playerDiv.style.top = player.position.y + "px";
+
+
+
+  // Create new shot
+  if (playerController.shoot) {
+    let newShot = new LaserShot();
+    newShot.createShot();
+    laserShots.push(newShot)
+
+    newShot.velocity.x = 5;
+    newShot.velocity.y = 0;
+    playerController.shoot = false;
+  }
+  
+  for (let i = laserShots.length - 1; i >= 0; i--) {
+    // Change position of each shot
+    laserShots[i].position.x += laserShots[i].velocity.x;
+    laserShots[i].position.y += laserShots[i].velocity.y;
+
+    // If shot hits edge of game screen, delete shot div
+    if (laserShots[i].position.x < 0 || laserShots[i].position.x > GAME_WIDTH || laserShots[i].position.y < 0 || laserShots[i].position.y > GAME_HEIGHT) {
+      gameScreen.removeChild(laserShotsDivs[i]);
+      laserShots.splice(i, 1);
+      laserShotsDivs.splice(i, 1);
+    }
+    
+    // Move shot on screen
+    else {
+      laserShotsDivs[i].style.left = laserShots[i].position.x + "px";
+      laserShotsDivs[i].style.top = laserShots[i].position.y + "px"; 
+    }
+  }
 
   window.requestAnimationFrame(gameLoop);
 }
