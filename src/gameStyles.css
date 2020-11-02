@@ -26,3 +26,11 @@ body {
 
   position: relative;
 }
+
+#user_name {
+  font-size: 12px;
+  font-family: Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
+  color: antiquewhite;
+
+  position: relative;
+}
