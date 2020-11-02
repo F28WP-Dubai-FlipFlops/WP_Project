@@ -6,6 +6,8 @@ const GAME_HEIGHT = 500;
 
 const playerDiv = document.getElementById("player");
 
+const userName = document.getElementById("user_name");
+
 
 // Player object to keep track of player within javascript
 let player = {
@@ -109,7 +111,9 @@ let gameLoop = function() {
   // Move player on the game screen
   playerDiv.style.left = player.position.x + "px";
   playerDiv.style.top = player.position.y + "px";
-
+  // For User name to follow the user
+  userName.style.left = player.position.x + "px";
+  userName.style.top = (player.position.y + 5) + "px";
   window.requestAnimationFrame(gameLoop);
 }
 
