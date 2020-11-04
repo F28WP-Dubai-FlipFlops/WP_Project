@@ -20,13 +20,13 @@ body {
   background-color: #101010;
 }
 
-#player {
+.player {
   width: 30px;
   height: 30px;
   background-color: #0000ff;
   display: inline-block;
 
-  position: relative;
+  position: absolute;
 }
 
 .laser {
@@ -38,10 +38,10 @@ body {
   position: absolute;
 }
 
-#user_name {
+.username {
   font-size: 12px;
   font-family: Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
   color: antiquewhite;
 
-  position: relative;
+  position: absolute;
 }
