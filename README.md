@@ -12,4 +12,4 @@ https://f28wp-dubai-flipflops.github.io/WP_Project/
 
 ## Game Mockup
 
-![Mockup Image](/THiS.png)
+![Mockup Image](/mockup.png)
