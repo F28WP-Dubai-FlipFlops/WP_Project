@@ -14,23 +14,34 @@ body {
   width: 800px;
   height: 500px;
   margin: auto;
+  position: relative;
 
   border: 1px solid #484848;
   background-color: #101010;
 }
 
-#player {
+.player {
   width: 30px;
   height: 30px;
   background-color: #0000ff;
+  display: inline-block;
 
-  position: relative;
+  position: absolute;
 }
 
-#user_name {
+.laser {
+  width: 8px;
+  height: 8px;
+  background-color: #FF0000;
+  display: inline-block;
+
+  position: absolute;
+}
+
+.username {
   font-size: 12px;
   font-family: Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
   color: antiquewhite;
 
-  position: relative;
+  position: absolute;
 }
