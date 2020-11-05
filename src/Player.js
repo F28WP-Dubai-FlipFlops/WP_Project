@@ -17,6 +17,7 @@ function Player(username, x, y) {
   };
 
   this.aimAngle = 0;
+  this.canShoot = true;
 
   // Ensures player stays within edges of the screen
   this.keepWithinBounds = function() {
@@ -79,9 +80,17 @@ function Player(username, x, y) {
 
   // Calculate new position of player
   this.move = function(dx, dy, mouseX, mouseY) {
-    // Increase velocity by 0.25 in the required direction
-    this.velocity.x += dx * 0.25;
-    this.velocity.y += dy * 0.25;
+    // Increase velocity by 0.2 in the required direction
+    this.velocity.x += dx * 0.2;
+    this.velocity.y += dy * 0.2;
+
+    // Set max velocity to 3px/frame in each direction
+    this.velocity.x = (this.velocity.x > 3)? 3:
+                      (this.velocity.x < -3)? -3:
+                      this.velocity.x;
+    this.velocity.y = (this.velocity.y > 3)? 3:
+                      (this.velocity.y < -3)? -3:
+                      this.velocity.y;
 
     // Change player position
     this.position.x += this.velocity.x;
@@ -97,12 +106,21 @@ function Player(username, x, y) {
 
   // Create a new laser div
   this.shoot = function() {
-    let shot = document.createElement("div");
-    shot.setAttribute("class", "laser");
-    shot.style.transform = "rotate(" + this.aimAngle + "rad)";
-    gameScreen.appendChild(shot);
+    // Shoot a laser if cooldown is off
+    if (this.canShoot) {
+      let shot = document.createElement("div");
+      shot.setAttribute("class", "laser");
+      shot.style.transform = "rotate(" + this.aimAngle + "rad)";
+      gameScreen.appendChild(shot);
 
-    laserShots.push(new Laser(this, shot));
+      laserShots.push(new Laser(this, shot));
+
+      // Reset cooldown
+      this.canShoot = false;
+      setTimeout(() => {
+        this.canShoot = true;
+      }, 1000);
+    }
   };
 }
 

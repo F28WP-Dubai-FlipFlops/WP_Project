@@ -11,8 +11,8 @@ function Controller() {
 
   // Updates key states
   this.keyListener = function(keyEvent) {
-    let keyState = (keyEvent.type === "keydown")? true: false;
-
+    let keyState = keyEvent.type === "keydown";
+    
     switch (keyEvent.keyCode) {
       case 37:    // Left Arrow Key
       case 65:    // "A" Key
@@ -54,5 +54,5 @@ function Controller() {
   this.mouseListener = function(mouseEvent) {
     this.mouseX = mouseEvent.clientX;
     this.mouseY = mouseEvent.clientY;
-  }
+  };
 }

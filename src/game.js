@@ -35,9 +35,6 @@ let gameLoop = function() {
     }
   }
 
-  // Reset shoot state once all lasers are shot
-  controller.shoot = false;
-
   for (let i = laserShots.length - 1; i >= 0; i--) {
     laserShots[i].updatePos();
   }
