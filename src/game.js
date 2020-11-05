@@ -5,9 +5,9 @@ const gameScreen = document.getElementById("gameScreen");
 let players = [];
 let laserShots = [];
 
-// Add two players (temporary; used for testing)
+// (Temp.) Add two players
 players.push(new Player("Player1", 0, 0));
-players.push(new Player("Player2", 770, 470));
+players.push(new Player("Player2", 1200, 600));
 
 
 const controller = new Controller();
@@ -28,8 +28,7 @@ let gameLoop = function() {
     if (controller.up) dy += -1;
     if (controller.down) dy += 1;
 
-    players[i].move(dx, dy);
-
+    players[i].move(dx, dy, controller.mouseX, controller.mouseY);
 
     if (controller.shoot) {
       players[i].shoot();
@@ -50,6 +49,7 @@ let gameLoop = function() {
 
 window.addEventListener("keydown", (e) => controller.keyListener(e));
 window.addEventListener("keyup", (e) => controller.keyListener(e));
+window.addEventListener("mousemove", (e) => controller.mouseListener(e));
 
 // Start game loop
 window.requestAnimationFrame(gameLoop);

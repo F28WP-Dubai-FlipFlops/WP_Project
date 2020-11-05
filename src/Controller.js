@@ -6,6 +6,8 @@ function Controller() {
   this.left = false;
   this.right = false; 
   this.shoot = false; 
+  this.mouseX = 0;
+  this.mouseY = 0;
 
   // Updates key states
   this.keyListener = function(keyEvent) {
@@ -47,4 +49,10 @@ function Controller() {
       keyEvent.preventDefault();
     }
   };
+
+  // Gets mouse position
+  this.mouseListener = function(mouseEvent) {
+    this.mouseX = mouseEvent.clientX;
+    this.mouseY = mouseEvent.clientY;
+  }
 }
