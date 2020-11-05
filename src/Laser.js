@@ -8,13 +8,14 @@ function Laser(player, shot) {
 
   // Initially set position at the centre of player div
   this.position = {
-    x: this.player.position.x + this.player.width - this.width/2, 
+    x: this.player.position.x + this.player.width/2 - this.width/2, 
     y: this.player.position.y + this.player.height/2 - this.height/2
   };
 
+  // Calculate x and y components of velocity using angle
   this.velocity = {
-    x: 5, 
-    y: 0
+    x: Math.cos(this.player.aimAngle - Math.PI / 2) * 5, 
+    y: Math.sin(this.player.aimAngle - Math.PI / 2) * 5
   };
 
   // Checks if laser is out of bounds and destroys it if it is
@@ -32,7 +33,7 @@ function Laser(player, shot) {
     
     // If laser is still within bounds
     return false;
-  }
+  };
   
   // Moves laser on game screen
   this.updatePos = function() {

@@ -6,11 +6,13 @@ function Controller() {
   this.left = false;
   this.right = false; 
   this.shoot = false; 
+  this.mouseX = 0;
+  this.mouseY = 0;
 
   // Updates key states
   this.keyListener = function(keyEvent) {
-    let keyState = (keyEvent.type === "keydown")? true: false;
-
+    let keyState = keyEvent.type === "keydown";
+    
     switch (keyEvent.keyCode) {
       case 37:    // Left Arrow Key
       case 65:    // "A" Key
@@ -46,5 +48,11 @@ function Controller() {
     if([32, 37, 38, 39, 40, 65, 68, 83, 87].indexOf(keyEvent.keyCode) != 1) {
       keyEvent.preventDefault();
     }
+  };
+
+  // Gets mouse position
+  this.mouseListener = function(mouseEvent) {
+    this.mouseX = mouseEvent.clientX;
+    this.mouseY = mouseEvent.clientY;
   };
 }
