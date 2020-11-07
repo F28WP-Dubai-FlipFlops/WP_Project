@@ -13,12 +13,12 @@ function Camera(cameraDiv, map, player) {
 
   // Calculates x coordinate of the camera (centred on player)
   this.getCamX = function() {
-    return this.player.position.x + (this.player.width / 2) - (this.width / 2);
+    return this.player.getCentreX() - (this.width / 2);
   };
 
   // Calculates y coordinate of the camera (centred on player)
   this.getCamY = function() {
-    return this.player.position.y + (this.player.height / 2) - (this.height / 2);
+    return this.player.getCentreY() - (this.height / 2);
   };
   
   // Moves the camera
