@@ -50,9 +50,9 @@ function Controller() {
     }
   };
 
-  // Gets mouse position
-  this.mouseListener = function(mouseEvent) {
-    this.mouseX = mouseEvent.clientX;
-    this.mouseY = mouseEvent.clientY;
+  // Gets mouse position relative to the map
+  this.mouseListener = function(mouseEvent, camX, camY) {
+    this.mouseX = mouseEvent.clientX + camX;
+    this.mouseY = mouseEvent.clientY + camY;
   };
 }

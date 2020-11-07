@@ -79,7 +79,7 @@ function Player(username, x, y) {
   };
 
   // Calculate new position of player
-  this.move = function(dx, dy, mouseX, mouseY) {
+  this.move = function(dx, dy) {
     // Increase velocity by 0.2 in the required direction
     this.velocity.x += dx * 0.2;
     this.velocity.y += dy * 0.2;
@@ -100,7 +100,6 @@ function Player(username, x, y) {
     this.velocity.y *= 0.95;
 
     this.keepWithinBounds();
-    this.setAimAngle(mouseX, mouseY);
     this.updatePos();
   };
 

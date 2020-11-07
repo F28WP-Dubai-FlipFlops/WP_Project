@@ -4,14 +4,29 @@
   padding: 0;
 }
 
-#gameScreen {
+body {
+  background-color: #000000;
+}
+
+#camera {
   width: 100%;
   height: 100%;
-  margin: auto;
   position: absolute;
+  overflow: hidden;
+}
+
+#gameScreen {
+  width: 3000px;
+  height: 2000px;
+  margin: auto;
+  position: relative;
   z-index: -10;
 
   background-color: #101010;
+  /* (Temp.) */
+  background-image: url("https://36.media.tumblr.com/d7caab0897beb384481184cbd6b79182/tumblr_n6bdslPzHF1s1oo06o1_400.png");
+  border: #888888 5px solid;
+  border-radius: 10px;
 }
 
 .player {
