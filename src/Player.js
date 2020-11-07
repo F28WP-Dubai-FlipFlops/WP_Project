@@ -16,8 +16,17 @@ function Player(username, x, y) {
     y: 0
   };
 
+  this.vMax = 2;
   this.aimAngle = 0;
   this.canShoot = true;
+
+  this.getCentreX = function() {
+    return this.position.x + this.width / 2;
+  }
+
+  this.getCentreY = function() {
+    return this.position.y + this.height / 2;
+  }
 
   // Ensures player stays within edges of the screen
   this.keepWithinBounds = function() {
@@ -34,8 +43,8 @@ function Player(username, x, y) {
     if (this.position.y < 0) {
       this.position.y = 0;
       this.velocity.y = 0;
-    } else if (this.position.y + this.height + 25 > this.parent.offsetHeight) {
-      this.position.y = this.parent.offsetHeight - this.height - 25;
+    } else if (this.position.y + this.height + 20 > this.parent.offsetHeight) {
+      this.position.y = this.parent.offsetHeight - this.height - 20;
       this.velocity.y = 0;
     }
   };
@@ -43,8 +52,8 @@ function Player(username, x, y) {
   // Calculates the aim angle of player
   this.setAimAngle = function(mouseX, mouseY) {
     // Calculate x and y componenets of vector from player to mouse
-    let vectorX = mouseX - (this.position.x + this.width / 2);
-    let vectorY = mouseY - (this.position.y + this.height / 2);
+    let vectorX = mouseX - this.getCentreX();
+    let vectorY = mouseY - this.getCentreY();
     
     // Calculate angle between mouse and right x-axis passing through player
     // Angle will be -0 to -pi rad if mouse above (counter-clockwise)
@@ -73,34 +82,27 @@ function Player(username, x, y) {
     this.htmlElement.style.transform = "rotate(" + this.aimAngle + "rad)";
 
     // Move name tag on the game screen
-    this.nameTag.style.left = (this.position.x + (this.width / 2) 
-                               - (this.nameTag.offsetWidth / 2)) + "px";
-    this.nameTag.style.top = (this.position.y + this.height + 5) + "px";
+    this.nameTag.style.left = (this.getCentreX() 
+                              - (this.nameTag.offsetWidth / 2)) + "px";
+    this.nameTag.style.top = (this.position.y + this.height) + "px";
   };
 
   // Calculate new position of player
-  this.move = function(dx, dy, mouseX, mouseY) {
-    // Increase velocity by 0.2 in the required direction
-    this.velocity.x += dx * 0.2;
-    this.velocity.y += dy * 0.2;
-
-    // Set max velocity to 3px/frame in each direction
-    this.velocity.x = (this.velocity.x > 3)? 3:
-                      (this.velocity.x < -3)? -3:
-                      this.velocity.x;
-    this.velocity.y = (this.velocity.y > 3)? 3:
-                      (this.velocity.y < -3)? -3:
-                      this.velocity.y;
+  this.move = function(dx, dy) {
+    // Increase velocity of velocity is less than vMax   
+    if (Math.sqrt((this.velocity.x ** 2) + (this.velocity.y ** 2)) <= this.vMax) {
+      this.velocity.x += dx * 0.15;
+      this.velocity.y += dy * 0.15;
+    }
 
     // Change player position
     this.position.x += this.velocity.x;
     this.position.y += this.velocity.y;
     // Apply friction to simulate effect of being in space
-    this.velocity.x *= 0.95;
-    this.velocity.y *= 0.95;
+    this.velocity.x *= 0.98;
+    this.velocity.y *= 0.98;
 
     this.keepWithinBounds();
-    this.setAimAngle(mouseX, mouseY);
     this.updatePos();
   };
 
@@ -156,7 +158,7 @@ let createNameTag = function(username, player) {
   // Centre name tag and set its position 5px below player
   nameTag.style.left = (player.offsetLeft + (player.offsetWidth / 2) 
                         - (nameTag.offsetWidth / 2)) + "px";
-  nameTag.style.top = (player.offsetTop + player.offsetHeight + 5) + "px";
+  nameTag.style.top = (player.offsetTop + player.offsetHeight) + "px";
   gameScreen.appendChild(nameTag);
 
   return nameTag;

@@ -8,26 +8,23 @@ function Laser(player, shot) {
 
   // Initially set position at the centre of player div
   this.position = {
-    x: this.player.position.x + this.player.width/2 - this.width/2, 
-    y: this.player.position.y + this.player.height/2 - this.height/2
+    x: this.player.getCentreX() - this.width / 2, 
+    y: this.player.getCentreY() - this.height / 2
   };
 
   // Calculate x and y components of velocity using angle
   this.velocity = {
-    x: Math.cos(this.player.aimAngle - Math.PI / 2) * 5, 
-    y: Math.sin(this.player.aimAngle - Math.PI / 2) * 5
+    x: Math.cos(this.player.aimAngle - Math.PI / 2) * 8, 
+    y: Math.sin(this.player.aimAngle - Math.PI / 2) * 8
   };
 
-  // Checks if laser is out of bounds and destroys it if it is
-  // Returns true if laser is destroyed, false otherwise
+  // Checks if laser is out of bounds; returns true if it is
   this.outOfBounds = function() {
-    // If laser goes off the screen, destroy the laser
-    if (this.position.x + this.width < 0 
-            || this.position.x > this.parent.offsetWidth 
-            || this.position.y + this.height < 0 
-            || this.position.y > this.parent.offsetHeight) {
-      gameScreen.removeChild(this.htmlElement);
-      laserShots.splice(laserShots.indexOf(this), 1);
+    // If laser hits edge of map, return true
+    if (this.position.x < 0 
+            || this.position.x + this.width > this.parent.offsetWidth 
+            || this.position.y < 0 
+            || this.position.y + this.height > this.parent.offsetHeight) {
       return true;
     }
     
@@ -44,6 +41,12 @@ function Laser(player, shot) {
     if (!this.outOfBounds()) {
       this.htmlElement.style.left = this.position.x + "px";
       this.htmlElement.style.top = this.position.y + "px"; 
+    }
+    
+    // Destroy laser if it is out of bounds
+    else {
+      gameScreen.removeChild(this.htmlElement);
+      laserShots.splice(laserShots.indexOf(this), 1);
     }
   };
 }
