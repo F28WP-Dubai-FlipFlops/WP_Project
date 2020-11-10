@@ -18,6 +18,22 @@ function Laser(player, shot) {
     y: Math.sin(this.player.aimAngle - Math.PI / 2) * 8
   };
 
+  // Gets x value of centre of laser div
+  this.getCentreX = function() {
+    return this.position.x + this.width / 2;
+  }
+
+  // Gets y value of centre of laser div
+  this.getCentreY = function() {
+    return this.position.y + this.height / 2;
+  }
+
+  // Removes this laser from the game screen
+  this.removeLaser = function() {
+    gameScreen.removeChild(this.htmlElement);
+    laserShots.splice(laserShots.indexOf(this), 1);
+  }
+
   // Checks if laser is out of bounds; returns true if it is
   this.outOfBounds = function() {
     // If laser hits edge of map, return true
@@ -45,8 +61,34 @@ function Laser(player, shot) {
     
     // Destroy laser if it is out of bounds
     else {
-      gameScreen.removeChild(this.htmlElement);
-      laserShots.splice(laserShots.indexOf(this), 1);
+      this.removeLaser();
     }
+  };
+
+  // Checks if this laser hit a player
+  // Returns true if hit, false otherwise
+  this.hitPlayer = function(player) {
+    if (player !== this.player) {
+      // Constants for centre x and y positions and radius of player and laser
+      const playerX = player.getCentreX();
+      const playerY = player.getCentreY();
+      const laserX = this.getCentreX();
+      const laserY = this.getCentreY();
+      const laserR = this.width / 2;
+      const playerR = player.width / 2;
+
+      // Calculate distance between player and laser
+      const distance = Math.sqrt(((playerX - laserX) ** 2) 
+                     + ((playerY - laserY) ** 2));
+      
+      // If the distance is less then the sum of their of radii, the laser 
+      // hit the player
+      if (distance < playerR + laserR) {
+        return true;
+      }
+    }
+
+    // If the laser did not hit the other player
+    return false;
   };
 }
