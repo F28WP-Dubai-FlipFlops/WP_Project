@@ -20,10 +20,12 @@ function Player(username, x, y) {
   this.aimAngle = 0;
   this.canShoot = true;
 
+  // Gets x value of centre of player div
   this.getCentreX = function() {
     return this.position.x + this.width / 2;
   }
 
+  // Gets y value of centre of player div
   this.getCentreY = function() {
     return this.position.y + this.height / 2;
   }
@@ -123,6 +125,17 @@ function Player(username, x, y) {
         this.canShoot = true;
       }, 1000);
     }
+  };
+
+  // Calculates player health and points when hit
+  this.takeDamage = function() {
+    // Play an animation by adding a class to player div
+    this.htmlElement.setAttribute("class", "player damage");
+
+    // Remove the animation class after animation is over
+    setTimeout(() => {
+      this.htmlElement.setAttribute("class", "player");
+    }, 300);
   };
 }
 

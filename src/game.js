@@ -39,6 +39,14 @@ let gameLoop = function() {
 
   for (let i = laserShots.length - 1; i >= 0; i--) {
     laserShots[i].updatePos();
+
+    // If laser hit a player, handle player damage and remove the laser
+    for (let j = players.length - 1; j >= 0; j--) {
+      if (laserShots[i] !== undefined && laserShots[i].hitPlayer(players[j])) {
+        players[j].takeDamage();
+        laserShots[i].removeLaser();
+      }
+    }
   }
   
   
