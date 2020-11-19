@@ -5,24 +5,81 @@
 }
 
 body {
-  margin: 10px;
-  background-color: #252525;
+  background-color: #000000;
+}
 
+#camera {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  overflow: hidden;
 }
 
 #gameScreen {
-  width: 800px;
-  height: 500px;
+  width: 3000px;
+  height: 2000px;
   margin: auto;
+  position: relative;
+  z-index: -10;
 
-  border: 1px solid #484848;
   background-color: #101010;
+  /* (Temp.) */
+  background-image: url("https://36.media.tumblr.com/d7caab0897beb384481184cbd6b79182/tumblr_n6bdslPzHF1s1oo06o1_400.png");
+  border: #888888 5px solid;
+  border-radius: 10px;
 }
 
-#player {
-  width: 30px;
-  height: 30px;
-  background-color: #0000ff;
+.player {
+  width: 80px;
+  height: 80px;
+  background-color: transparent;
+  background-position: center;
+  background-size: cover;
+  display: inline-block;
 
-  position: relative;
+  position: absolute;
+}
+
+/* Class to display hit animation */
+.damage:before {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background-color: #FF5500;
+  display: block;
+  content: " "; 
+  z-index: 0;
+
+  animation-name: take-damage;
+  animation-duration: 300ms;
+
+  position: absolute;
+}
+
+/* Hit animation */
+@keyframes take-damage {
+  0% {opacity: 0;}
+  30% {opacity: 0.8;}
+  70% {opacity: 0.3;}
+  100% {opacity: 0;}
+}
+
+
+.laser {
+  width: 12px;
+  height: 12px;
+  background-color: #FF0000;
+  border-radius: 6px;
+  display: inline-block;
+  z-index: -1;
+
+  position: absolute;
+}
+
+.username {
+  font-size: 12px;
+  font-family: Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
+  color: antiquewhite;
+
+  position: absolute;
 }
