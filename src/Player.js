@@ -139,11 +139,6 @@ function Player(username, x, y) {
   };
 }
 
-// (Temp.) Array with file names for spaceship images
-const playerImg = ["spaceship1.png", 
-                   "spaceship2.png", 
-                   "spaceship3.png", 
-                   "spaceship4.png"];
 
 // Create a new div to represent player object
 let createPlayer = function(x, y) {
@@ -151,8 +146,8 @@ let createPlayer = function(x, y) {
   player.setAttribute("class", "player");
 
   // (Temp.) Set player image randomly
-  let imgColor = Math.floor(Math.random() * playerImg.length);
-  player.style.backgroundImage = "url(../spaceships/" + playerImg[imgColor] + ")";
+  let imgColor = Math.floor(Math.random() * 8);
+  player.style.backgroundImage = "url(/images/spaceship" + imgColor + ".png)";
   
   // Set position of player div and add to html
   player.style.left = x + "px";
