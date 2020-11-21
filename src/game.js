@@ -11,43 +11,89 @@ let playerDivs = {};
 let nameTagDivs = {};
 let laserDivs = {};
 
-// (Temp.) Add two players
-createPlayer(1, "Player1", 0, 0);
-createPlayer(2, "Player2", 500, 200);
+
+var clientId;
+const username = prompt("Enter your username");
+
+socket.emit("login", username);
+
+socket.on("loggedIn", (state) => {
+  clientId = state.id;
+  createPlayer(state.id, state.username, state.x, state.y);
+  init();
+});
+
+socket.on("connectedPlayers", (allPlayers) => {
+  for (let i in allPlayers) {
+    if (i !== clientId) {
+      createPlayer(allPlayers[i].id, allPlayers[i].username, allPlayers[i].x, allPlayers[i].y);
+    }
+  }
+})
+
+socket.on("newPlayer", (state) => {
+  createPlayer(state.id, state.username, state.x, state.y);
+  console.log(state.username + " connected (" + state.id + ")");
+});
+
+socket.on("playerDisconnected", (playerId) => {
+  console.log(players[playerId].username + " disconnected");
+  removePlayer(playerId);
+})
 
 
-const camera = new Camera(cameraDiv, gameScreen, players[1]);
-const controller = new Controller();
 
-// Variables used to calculate positions independant of frame rate
-let startTime = Date.now();
+let camera;
+let controller;
+let startTime; 
 let deltaTime;
+
+function init() {
+  camera = new Camera(cameraDiv, gameScreen, players[clientId]);
+  controller = new Controller();
+
+  // Variables used to calculate positions independant of frame rate
+  startTime = Date.now();
+
+  // Start game loop
+  window.requestAnimationFrame(gameLoop);
+}
+
+// Event listeners
+window.addEventListener("keydown", (e) => controller.keyListener(e));
+window.addEventListener("keyup", (e) => controller.keyListener(e));
+
+window.addEventListener("mousemove", (e) => {
+  controller.mouseListener(e, camera.getCamX(), camera.getCamY());
+  
+  // Recalculates the aim angle of the player
+  players[clientId].setAimAngle(controller.mouseX, controller.mouseY);
+});
 
 // Function called every time new frame is drawn
 function gameLoop() {
   // Calculate time since last frame was drawn
   deltaTime = ((Date.now() - startTime) / 1000) * 60;
   
-  // Controls affect all players the same for now; used for testing
-  for (let i in players) {
-    let dx = 0;
-    let dy = 0;
-    
-    // Calculate change in velocity based on key presses
-    if (controller.left) dx += -1 * deltaTime;
-    if (controller.right) dx += 1 * deltaTime;
-    
-    if (controller.up) dy += -1 * deltaTime;
-    if (controller.down) dy += 1 * deltaTime;
+  // Apply controls on player
+  let dx = 0;
+  let dy = 0;
+  
+  // Calculate change in velocity based on key presses
+  if (controller.left) dx += -1 * deltaTime;
+  if (controller.right) dx += 1 * deltaTime;
+  
+  if (controller.up) dy += -1 * deltaTime;
+  if (controller.down) dy += 1 * deltaTime;
 
-    players[i].move(dx, dy);
+  players[clientId].move(dx, dy);
 
-    // If player is able to shoot, make a laser and set a cooldown
-    if (controller.shoot && players[i].canShoot) {
-      createNewLaser(i);
-      players[i].applyShootCooldown();
-    }
+  // If player is able to shoot, make a laser and set a cooldown
+  if (controller.shoot && players[clientId].canShoot) {
+    createNewLaser(clientId);
+    players[clientId].applyShootCooldown();
   }
+  
 
   for (let i in laserShots) {
     laserShots[i].move(deltaTime);
@@ -66,23 +112,6 @@ function gameLoop() {
   startTime = Date.now();    // Stores time when this frame was drawn
   window.requestAnimationFrame(gameLoop);
 }
-
-
-// Event listeners
-window.addEventListener("keydown", (e) => controller.keyListener(e));
-window.addEventListener("keyup", (e) => controller.keyListener(e));
-
-window.addEventListener("mousemove", (e) => {
-  controller.mouseListener(e, camera.getCamX(), camera.getCamY());
-  
-  // Recalculates the aim angle of the player
-  for (let i in players) {
-    players[i].setAimAngle(controller.mouseX, controller.mouseY);
-  };
-});
-
-// Start game loop
-window.requestAnimationFrame(gameLoop);
 
 
 
@@ -120,6 +149,16 @@ function createPlayer(id, username, x, y) {
   
   playerDivs[id] = playerDiv;
   nameTagDivs[id] = nameTag;
+}
+
+// Deletes a player and its html div
+function removePlayer(playerId) {
+  gameScreen.removeChild(playerDivs[playerId]);
+  gameScreen.removeChild(nameTagDivs[playerId]);
+
+  delete players[playerId];
+  delete playerDivs[playerId];
+  delete nameTagDivs[playerId];
 }
 
 // Create a new laser object
