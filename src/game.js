@@ -1,6 +1,7 @@
 
 const cameraDiv = document.getElementById("camera");
 const gameScreen = document.getElementById("gameScreen");
+const healthbar = document.getElementById("healthbar");
 const mapWidth = gameScreen.offsetWidth;
 const mapHeight = gameScreen.offsetHeight;
 
@@ -14,6 +15,7 @@ let laserDivs = {};
 
 var clientId;
 const username = prompt("Enter your username");
+document.getElementById("playerName").innerText = username;
 
 socket.emit("login", username);
 
@@ -209,6 +211,11 @@ function checkHits() {
           removeLaser(i);
           players[j].takeDamage();
           damageEffect(j);
+
+          if(players[j].hp === 0){
+            removePlayer(j);
+          }
+          
           break;
         }
       }
@@ -225,6 +232,8 @@ function removeLaser(laserId) {
 
 // Play an animation when a player takes damage
 function damageEffect(playerId) {
+  healthbar.style.width = players[playerId] + "%";
+
   // Play the animation by adding a class to player div
   playerDivs[playerId].setAttribute("class", "player damage");
 

@@ -19,6 +19,7 @@ function Player(id, username, x, y) {
   this.vMax = 2;
   this.aimAngle = 0;
   this.canShoot = true;
+  this.hp = 100;
 
   // Gets x value of centre of player div
   this.getCentreX = function() {
@@ -104,5 +105,6 @@ function Player(id, username, x, y) {
   // Calculates player health and points when hit
   this.takeDamage = function() {
     // TODO
+    this.hp -= 5;
   };
 }
