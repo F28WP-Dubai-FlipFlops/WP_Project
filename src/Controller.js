@@ -1,13 +1,15 @@
 // Controller class to hande player input
 function Controller() {
   // Remember state of keys so holding down a key will repeat its function
-  this.up = false; 
-  this.down = false; 
-  this.left = false;
-  this.right = false; 
-  this.shoot = false; 
-  this.mouseX = 0;
-  this.mouseY = 0;
+  this.state = {
+    up: false, 
+    down: false,  
+    left: false, 
+    right: false,  
+    shoot: false, 
+    mouseX: 0, 
+    mouseY: 0
+  }
 
   // Updates key states
   this.keyListener = function(keyEvent) {
@@ -16,31 +18,26 @@ function Controller() {
     switch (keyEvent.keyCode) {
       case 37:    // Left Arrow Key
       case 65:    // "A" Key
-        this.left = keyState;
-        console.log("left");
+        this.state.left = keyState;
         break;
 
       case 38:    // Up Arrow Key
       case 87:    // "W" Key
-        this.up = keyState;
-        console.log("up");
+        this.state.up = keyState;
         break;
 
       case 39:    // Right Arrow Key
       case 68:    // "D" Key
-        this.right = keyState;
-        console.log("right");
+        this.state.right = keyState;
         break;
 
       case 40:    // Down Arrow Key
       case 83:    // "S" Key
-        this.down = keyState;
-        console.log("down");
+        this.state.down = keyState;
         break;
 
       case 32:    // Spacebar
-        this.shoot = keyState;
-        console.log("shoot");
+        this.state.shoot = keyState;
         break;
     }
 
@@ -52,7 +49,7 @@ function Controller() {
 
   // Gets mouse position relative to the map
   this.mouseListener = function(mouseEvent, camX, camY) {
-    this.mouseX = mouseEvent.clientX + camX;
-    this.mouseY = mouseEvent.clientY + camY;
+    this.state.mouseX = mouseEvent.clientX + camX;
+    this.state.mouseY = mouseEvent.clientY + camY;
   };
 }

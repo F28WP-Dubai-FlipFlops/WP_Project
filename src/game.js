@@ -1,107 +1,165 @@
-
+// Constants to get html elements
 const cameraDiv = document.getElementById("camera");
 const gameScreen = document.getElementById("gameScreen");
 const healthbar = document.getElementById("healthbar");
+
+// Constants for map size
 const mapWidth = gameScreen.offsetWidth;
 const mapHeight = gameScreen.offsetHeight;
 
-// Objects to store all player, name tag and laser objects
+
+// Objects to store all player, name tag and laser objects and divs
 let players = {};
-let laserShots = {};
+let lasers = {};
 let playerDivs = {};
 let nameTagDivs = {};
 let laserDivs = {};
 
-
+// Variables to store this client's ID and username
 var clientId;
 const username = prompt("Enter your username");
 document.getElementById("playerName").innerText = username;
 
-socket.emit("login", username);
 
-socket.on("loggedIn", (state) => {
-  clientId = state.id;
-  createPlayer(state.id, state.username, state.x, state.y);
+// Register client on server and get the client id
+socket.emit("playerJoin", username);
+socket.on("connect", () => {
+  clientId = socket.id;
+  console.log("My ID: " + clientId);
+});
+
+// Get client state and start the game
+socket.on("clientState", (state) => {
+  createPlayer(state);
   init();
 });
 
-socket.on("connectedPlayers", (allPlayers) => {
-  for (let i in allPlayers) {
-    if (i !== clientId) {
-      createPlayer(allPlayers[i].id, allPlayers[i].username, allPlayers[i].x, allPlayers[i].y);
+// Get states of all players periodically
+socket.on("playerStates", (allPlayerStates) => {
+  // If a player is in the game, add them to the local game state
+  for (let id in allPlayerStates) {
+    if (!(id in players)) {
+      createPlayer(allPlayerStates[id]);
     }
   }
-})
 
-socket.on("newPlayer", (state) => {
-  createPlayer(state.id, state.username, state.x, state.y);
-  console.log(state.username + " connected (" + state.id + ")");
+  // If a player has left the game, remove them from the local game state
+  for (let id in players) {
+    if (!(id in allPlayerStates)) {
+      removePlayer(id);
+    }
+  }
+
+  // Update states of all players except client
+  for (let id in allPlayerStates) {
+    if (id !== clientId) {
+      players[id].setState(allPlayerStates[id]);
+    }
+  }
 });
 
-socket.on("playerDisconnected", (playerId) => {
-  console.log(players[playerId].username + " disconnected");
+// Create a new laser whenever another player fires a lasers
+socket.on("newLaser", (laserState) => {
+  createLaser(laserState);
+});
+
+// If another player has hit this client, apply damage effects
+socket.on("takeDamage", (playerId, laserId) => {
+  removeLaser(laserId);
+  players[playerId].takeDamage();
+  damageEffect(playerId);
+});
+
+// If a player has died, remove them from the game state
+socket.on("playerDead", (playerId) => {
   removePlayer(playerId);
-})
+});
+
+// If the client has died, end the game
+socket.on("youLost", () => {
+  endGame();
+});
 
 
 
-let camera;
-let controller;
-let startTime; 
-let deltaTime;
+let camera;          // Variable for camera object
+let controller;      // Variable for player controller
+let inputInterval;   // Variable to hold playerInput interval
+let startTime;       // Variable for when the last frame was drawn
+let deltaTime;       // Variable for time elapsed since last frame was drawn
+let animFrame;       // Variable to hold AnimationFrame
 
+// Starts game
 function init() {
   camera = new Camera(cameraDiv, gameScreen, players[clientId]);
   controller = new Controller();
 
-  // Variables used to calculate positions independant of frame rate
+  window.addEventListener("keydown", (e) => controller.keyListener(e));
+  window.addEventListener("keyup", (e) => controller.keyListener(e));
+  window.addEventListener("mousemove", (e) => { 
+    controller.mouseListener(e, camera.getCamX(), camera.getCamY());
+
+    // Update the aim angle of the client
+    players[clientId].setAimAngle(controller.state.mouseX, 
+                                  controller.state.mouseY);
+  });
+
+  // Interval to send player state to server every 10ms
+  inputInterval = setInterval(() => {
+    socket.emit("playerInput", players[clientId].getState());
+  }, 10);
+
+  // Variable used to calculate positions independant of frame rate
   startTime = Date.now();
 
   // Start game loop
   window.requestAnimationFrame(gameLoop);
 }
 
-// Event listeners
-window.addEventListener("keydown", (e) => controller.keyListener(e));
-window.addEventListener("keyup", (e) => controller.keyListener(e));
-
-window.addEventListener("mousemove", (e) => {
-  controller.mouseListener(e, camera.getCamX(), camera.getCamY());
-  
-  // Recalculates the aim angle of the player
-  players[clientId].setAimAngle(controller.mouseX, controller.mouseY);
-});
-
 // Function called every time new frame is drawn
 function gameLoop() {
   // Calculate time since last frame was drawn
   deltaTime = ((Date.now() - startTime) / 1000) * 60;
-  
-  // Apply controls on player
-  let dx = 0;
-  let dy = 0;
-  
-  // Calculate change in velocity based on key presses
-  if (controller.left) dx += -1 * deltaTime;
-  if (controller.right) dx += 1 * deltaTime;
-  
-  if (controller.up) dy += -1 * deltaTime;
-  if (controller.down) dy += 1 * deltaTime;
 
-  players[clientId].move(dx, dy);
+  // Move client using controller state
+  players[clientId].move(controller.state, deltaTime);
 
-  // If player is able to shoot, make a laser and set a cooldown
-  if (controller.shoot && players[clientId].canShoot) {
-    createNewLaser(clientId);
+  // For smooth movement, update positions of other players based on their 
+  // previous velocities
+  for (let id in players) {
+    if (id !== clientId) {
+      // A new controller state is sent so that the direction of the player 
+      // does not change
+      players[id].move((new Controller()).state, deltaTime);
+    }
+  }
+
+  // If client is able to shoot, make a laser and set a cooldown
+  if (controller.state.shoot && players[clientId].canShoot) {
+    const laserState = {
+      id: generateLaserId(), 
+      playerId: clientId, 
+      pos: {
+        x: players[clientId].getCentreX(), 
+        y: players[clientId].getCentreY()
+      }, 
+      angle: players[clientId].aimAngle
+    };
+
+    createLaser(laserState);
     players[clientId].applyShootCooldown();
+    // Let the server and other players know when the laser is shot
+    socket.emit("shotLaser", laserState);
   }
   
 
-  for (let i in laserShots) {
-    laserShots[i].move(deltaTime);
+  // Update positions of lasers
+  for (let id in lasers) {
+    lasers[id].move(deltaTime);
 
-    if (laserShots[i].isOutOfBounds()) {
-      removeLaser(i);
+    // Remove laser is it hits the edge of the map
+    if (lasers[id].isOutOfBounds()) {
+      removeLaser(id);
     }
   }
   
@@ -110,17 +168,20 @@ function gameLoop() {
   updateDisplay();           // Moves html divs
   camera.moveCamera();       // Moves camera
 
-
   startTime = Date.now();    // Stores time when this frame was drawn
-  window.requestAnimationFrame(gameLoop);
+  
+  // Call gameLoop() again when the browser is ready to draw next frame
+  animFrame = window.requestAnimationFrame(gameLoop);
 }
 
 
 
 // Create a new player object
-function createPlayer(id, username, x, y) {
+function createPlayer(playerState) {
+  const id = playerState.id;
+
   // Make a new player object (within js)
-  let player = new Player(id, username, x, y);
+  let player = new Player(playerState);
   players[id] = player;
 
 
@@ -132,15 +193,15 @@ function createPlayer(id, username, x, y) {
   playerDiv.style.backgroundImage = "url(/images/spaceship" + imgColor + ".png)";
   
   // Set position of player div and add to html
-  playerDiv.style.left = x + "px";
-  playerDiv.style.top = y + "px";
+  playerDiv.style.left = playerState.pos.x + "px";
+  playerDiv.style.top = playerState.pos.y + "px";
   gameScreen.appendChild(playerDiv);
 
 
   // Create a name tag for the player
   let nameTag = document.createElement("div");
   nameTag.setAttribute("class", "username");
-  nameTag.innerHTML = username;
+  nameTag.innerText = playerState.username;
 
   // Centre name tag and set its position 5px below player
   nameTag.style.left = (playerDiv.offsetLeft + (playerDiv.offsetWidth / 2) 
@@ -151,10 +212,14 @@ function createPlayer(id, username, x, y) {
   
   playerDivs[id] = playerDiv;
   nameTagDivs[id] = nameTag;
+
+  console.log(playerState.username + " has joined the game");
 }
 
 // Deletes a player and its html div
 function removePlayer(playerId) {
+  console.log(players[playerId].username + " has left the game");
+
   gameScreen.removeChild(playerDivs[playerId]);
   gameScreen.removeChild(nameTagDivs[playerId]);
 
@@ -163,41 +228,42 @@ function removePlayer(playerId) {
   delete nameTagDivs[playerId];
 }
 
-// Create a new laser object
-function createNewLaser(playerId) {
-  // Generate a unique laser id
+// Generates ta unique laser id
+function generateLaserId() {
   let laserId;
   do {
     laserId = Math.floor(Math.random() * 1000);
-  } while(laserId in laserShots);
+  } while(laserId in lasers);
 
-  // Calulate position and direction of laser and make the laser object
-  let x = players[playerId].getCentreX();
-  let y = players[playerId].getCentreY();
-  let angle = players[playerId].aimAngle;
-  let laser = new Laser(laserId, playerId, x, y, angle);
+  return laserId;
+}
+
+// Create a new laser object
+function createLaser(laserState) {
+  let laser = new Laser(laserState);
 
   // Create an html div to represent laser
   let laserDiv = document.createElement("div");
   laserDiv.setAttribute("class", "laser");
-  laserDiv.style.transform = "rotate(" + angle + "rad)";
+  laserDiv.style.transform = "rotate(" + laserState.angle + "rad)";
   gameScreen.appendChild(laserDiv);
   
-  
-  laserShots[laserId] = laser;
-  laserDivs[laserId] = laserDiv;
+
+  lasers[laserState.id] = laser;
+  laserDivs[laserState.id] = laserDiv;
 }
 
-// Checks if any laser has hit a player
+// Checks if any of client's lasers have hit another player
 function checkHits() {
-  for (let i in laserShots) {
-    for (let j in players) {
-      if (laserShots[i].playerId !== j) {
-        // Constants for centre x and y positions and radius of player and laser
-        const playerX = players[j].getCentreX();
-        const playerY = players[j].getCentreY();
-        const laserX = laserShots[i].getCentreX();
-        const laserY = laserShots[i].getCentreY();
+  for (let lId in lasers) {
+    for (let pId in players) {
+      if (lasers[lId].playerId === clientId && pId !== clientId) {
+        // Constants for centre x and y positions and radius of player and 
+        // laser
+        const playerX = players[pId].getCentreX();
+        const playerY = players[pId].getCentreY();
+        const laserX = lasers[lId].getCentreX();
+        const laserY = lasers[lId].getCentreY();
         const laserR = laserWidth / 2;
         const playerR = playerWidth / 2;
 
@@ -208,12 +274,13 @@ function checkHits() {
         // If the distance is less then the sum of their of radii, the laser 
         // hit the player
         if (distance < playerR + laserR) {
-          removeLaser(i);
-          players[j].takeDamage();
-          damageEffect(j);
+          removeLaser(lId);
+          players[pId].takeDamage();
+          damageEffect(pId);
+          socket.emit("playerHit", pId, lId);
 
-          if(players[j].hp === 0){
-            removePlayer(j);
+          if(players[pId].hp <= 0){
+            removePlayer(pId);
           }
           
           break;
@@ -226,7 +293,7 @@ function checkHits() {
 // Deletes a laser object and its html div
 function removeLaser(laserId) {
   gameScreen.removeChild(laserDivs[laserId]);
-  delete laserShots[laserId];
+  delete lasers[laserId];
   delete laserDivs[laserId]
 }
 
@@ -246,22 +313,35 @@ function damageEffect(playerId) {
 
 // Updates positions of all html elements
 function updateDisplay() {
-  for (let i in players) {
-    // Move player on the game screen
-    playerDivs[i].style.left = players[i].position.x + "px";
-    playerDivs[i].style.top = players[i].position.y + "px";
+  // Update client's health bar
+  healthbar.style.width = players[clientId].hp + "%";
 
-    // Rotate player
-    playerDivs[i].style.transform = "rotate(" + players[i].aimAngle + "rad)";
+  // Move players and their name tags on the screen
+  for (let id in players) {
+    playerDivs[id].style.left = players[id].position.x + "px";
+    playerDivs[id].style.top = players[id].position.y + "px";
 
-    // Move name tag on the game screen
-    nameTagDivs[i].style.left = (players[i].getCentreX() 
-                              - (nameTagDivs[i].offsetWidth / 2)) + "px";
-    nameTagDivs[i].style.top = (players[i].position.y + playerHeight) + "px";
+    playerDivs[id].style.transform = "rotate(" + players[id].aimAngle + "rad)";
+
+    nameTagDivs[id].style.left = (players[id].getCentreX() 
+                                  - (nameTagDivs[id].offsetWidth / 2)) + "px";
+    nameTagDivs[id].style.top = (players[id].position.y + playerHeight) + "px";
   }
 
-  for (let i in laserShots) {
-    laserDivs[i].style.left = laserShots[i].position.x + "px";
-    laserDivs[i].style.top = laserShots[i].position.y + "px"; 
+  // Move lasers on the screen
+  for (let id in lasers) {
+    laserDivs[id].style.left = lasers[id].position.x + "px";
+    laserDivs[id].style.top = lasers[id].position.y + "px"; 
   }
+}
+
+// Ends the game and displays points earned
+function endGame() {
+  updateDisplay();
+  window.cancelAnimationFrame(animFrame);
+  clearInterval(inputInterval);
+
+  removePlayer(clientId);
+
+  // TODO End screen
 }

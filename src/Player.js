@@ -1,35 +1,68 @@
+// Constants for player size
 const playerWidth = 80;
 const playerHeight = 80;
 
+// Constant for max velocity
+const vMax = 2;
+
 // Class to represent player in javascript
-function Player(id, username, x, y) {
-  this.id = id;
-  this.username = username;
+function Player(state) {
+  this.id = state.id;
+  this.username = state.username;
   
   this.position = {
-    x: x, 
-    y: y
+    x: state.pos.x, 
+    y: state.pos.y
   };
   
   this.velocity = {
-    x: 0, 
-    y: 0
+    x: state.vel.x, 
+    y: state.vel.y
   };
 
-  this.vMax = 2;
-  this.aimAngle = 0;
-  this.canShoot = true;
-  this.hp = 100;
+  this.aimAngle = state.aimAngle;
+  this.canShoot = state.canShoot;
+  this.hp = state.hp;
+
+  
+  // Returns a state object for the player
+  this.getState = function() {
+    return {
+      id: this.id, 
+      username: this.username, 
+      pos: {x: this.position.x, y: this.position.y}, 
+      vel: {x: this.velocity.x, y: this.velocity.y}, 
+      aimAngle: this.aimAngle, 
+      canShoot: this.canShoot, 
+      hp: this.hp 
+    }
+  };
+
+  // Sets the state of the player
+  this.setState = function(state) {
+    this.id = state.id;
+    this.username = state.username;
+    
+    this.position.x = state.pos.x; 
+    this.position.y = state.pos.y;
+    
+    this.velocity.x = state.vel.x; 
+    this.velocity.y = state.vel.y;
+
+    this.aimAngle = state.aimAngle;
+    this.canShoot = state.canShoot;
+    this.hp = state.hp;
+  }
 
   // Gets x value of centre of player div
   this.getCentreX = function() {
     return this.position.x + playerWidth / 2;
-  }
+  };
 
   // Gets y value of centre of player div
   this.getCentreY = function() {
     return this.position.y + playerHeight / 2;
-  }
+  };
 
   // Ensures player stays within edges of the screen
   this.keepWithinBounds = function() {
@@ -76,9 +109,20 @@ function Player(id, username, x, y) {
   };
 
   // Calculate new position of player
-  this.move = function(dx, dy) {
+  this.move = function(controllerState, deltaTime) {
+    // Apply controls on player
+    let dx = 0;
+    let dy = 0;
+    
+    // Calculate change in velocity based on key presses
+    if (controllerState.left) dx += -1 * deltaTime;
+    if (controllerState.right) dx += 1 * deltaTime;
+    
+    if (controllerState.up) dy += -1 * deltaTime;
+    if (controllerState.down) dy += 1 * deltaTime;
+
     // Increase velocity of velocity is less than vMax   
-    if (Math.sqrt((this.velocity.x ** 2) + (this.velocity.y ** 2)) <= this.vMax) {
+    if (Math.sqrt((this.velocity.x ** 2) + (this.velocity.y ** 2)) <= vMax) {
       this.velocity.x += dx * 0.15;
       this.velocity.y += dy * 0.15;
     }
@@ -96,15 +140,18 @@ function Player(id, username, x, y) {
   // Applies a shoot cooldown on the player
   this.applyShootCooldown = function() {
     this.canShoot = false;
+    console.log("shot");
 
     setTimeout(() => {
       this.canShoot = true;
+      console.log("cooldown off");
     }, 1500);
   };
 
   // Calculates player health and points when hit
   this.takeDamage = function() {
-    // TODO
     this.hp -= 5;
+
+    // TODO points
   };
 }
