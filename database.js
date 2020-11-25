@@ -4,8 +4,10 @@ const readDataParser = dataparser();
 const app = express();
 
 app.get("/", (req, res) => {
-  res.sendFile(__dirname + "/login-page.html");
+  res.sendFile(__dirname + "/game/login-page.html");
 });
+
+app.use(express.static("game"));
 
 //Creating a database connection
 var mysql = require('mysql');
@@ -69,13 +71,13 @@ app.post('login', readDataParser, function(req, res){
                 if (result.length){
                     console.log("one exists");
                     //The game starts
-                    res.sendFile(__dirname + '/client/gamebegin.html');
+                    res.sendFile(__dirname + '/src/game.html');
                 }
 
                 //If passwords dont match, then error is shown to the user and login page restarts
                 else{
                     console.log("Wrong password entered");
-                    res.sendFile(__dirname + '/client/login-page.html')
+                    res.sendFile(__dirname + '/game/login-page.html')
                 }
             });
         }
@@ -91,7 +93,7 @@ app.post('login', readDataParser, function(req, res){
                 console.log("1 record inserted");
             });
             //We jump to the game HTML
-            res.sendFile(__dirname + '/client/gamebegin.html');
+            res.sendFile(__dirname + '/src/game.html');
         }
     });
 });
