@@ -1,6 +1,7 @@
 // Constants to get html elements
 const cameraDiv = document.getElementById("camera");
 const gameScreen = document.getElementById("gameScreen");
+const pointsDisplay = document.getElementById("points");
 const healthbar = document.getElementById("healthbar");
 
 // Constants for map size
@@ -63,11 +64,22 @@ socket.on("newLaser", (laserState) => {
   createLaser(laserState);
 });
 
-// If another player has hit this client, apply damage effects
-socket.on("takeDamage", (playerId, laserId) => {
-  removeLaser(laserId);
-  players[playerId].takeDamage();
-  damageEffect(playerId);
+socket.on("pointsUpdate", (points) => {
+  players[clientId].points = points;
+});
+
+// If a player has hit another player, apply damage effects
+socket.on("applyDamage", (playerId, laserId) => {
+  if (lasers[laserId]) {
+    removeLaser(laserId);
+  }
+  if (players[playerId]) {
+    damageEffect(playerId);
+  }
+
+  if (playerId === clientId) {
+    players[clientId].hp -= 5;
+  }
 });
 
 // If a player has died, remove them from the game state
@@ -76,8 +88,8 @@ socket.on("playerDead", (playerId) => {
 });
 
 // If the client has died, end the game
-socket.on("youLost", () => {
-  endGame();
+socket.on("gameOver", () => {
+  gameOver();
 });
 
 
@@ -104,10 +116,10 @@ function init() {
                                   controller.state.mouseY);
   });
 
-  // Interval to send player state to server every 10ms
+  // Interval to send player state to server
   inputInterval = setInterval(() => {
     socket.emit("playerInput", players[clientId].getState());
-  }, 10);
+  }, 50);
 
   // Variable used to calculate positions independant of frame rate
   startTime = Date.now();
@@ -275,13 +287,8 @@ function checkHits() {
         // hit the player
         if (distance < playerR + laserR) {
           removeLaser(lId);
-          players[pId].takeDamage();
           damageEffect(pId);
           socket.emit("playerHit", pId, lId);
-
-          if(players[pId].hp <= 0){
-            removePlayer(pId);
-          }
           
           break;
         }
@@ -294,7 +301,7 @@ function checkHits() {
 function removeLaser(laserId) {
   gameScreen.removeChild(laserDivs[laserId]);
   delete lasers[laserId];
-  delete laserDivs[laserId]
+  delete laserDivs[laserId];
 }
 
 // Play an animation when a player takes damage
@@ -313,7 +320,8 @@ function damageEffect(playerId) {
 
 // Updates positions of all html elements
 function updateDisplay() {
-  // Update client's health bar
+  // Update client's points and health bar
+  pointsDisplay.innerText = "Points: " + players[clientId].points;
   healthbar.style.width = players[clientId].hp + "%";
 
   // Move players and their name tags on the screen
@@ -336,12 +344,18 @@ function updateDisplay() {
 }
 
 // Ends the game and displays points earned
-function endGame() {
+function gameOver() {
+  // Disconnect socket connection
+  socket.emit("leaveGame");
+
+  // Stop intervals to move objects and send inputs
   updateDisplay();
   window.cancelAnimationFrame(animFrame);
   clearInterval(inputInterval);
 
-  removePlayer(clientId);
+  // Show game over screen
+  document.getElementById("gameOverScreen").style.display = "block";
+  document.getElementById("totalPoints").innerText = "Points: " + players[clientId].points;
 
-  // TODO End screen
+  removePlayer(clientId);
 }

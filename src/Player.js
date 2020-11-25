@@ -23,6 +23,7 @@ function Player(state) {
   this.aimAngle = state.aimAngle;
   this.canShoot = state.canShoot;
   this.hp = state.hp;
+  this.points = state.points;
 
   
   // Returns a state object for the player
@@ -34,7 +35,8 @@ function Player(state) {
       vel: {x: this.velocity.x, y: this.velocity.y}, 
       aimAngle: this.aimAngle, 
       canShoot: this.canShoot, 
-      hp: this.hp 
+      hp: this.hp, 
+      points: this.points
     }
   };
 
@@ -52,6 +54,7 @@ function Player(state) {
     this.aimAngle = state.aimAngle;
     this.canShoot = state.canShoot;
     this.hp = state.hp;
+    this.points = state.points;
   }
 
   // Gets x value of centre of player div
@@ -140,18 +143,9 @@ function Player(state) {
   // Applies a shoot cooldown on the player
   this.applyShootCooldown = function() {
     this.canShoot = false;
-    console.log("shot");
 
     setTimeout(() => {
       this.canShoot = true;
-      console.log("cooldown off");
     }, 1500);
-  };
-
-  // Calculates player health and points when hit
-  this.takeDamage = function() {
-    this.hp -= 5;
-
-    // TODO points
   };
 }

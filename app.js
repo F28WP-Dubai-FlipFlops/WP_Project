@@ -71,7 +71,8 @@ function handlePlayerJoin(username, socket) {
     vel: {x: 0, y: 0},
     aimAngle: 0,
     canShoot: true,  
-    hp: 100
+    hp: 100, 
+    points: 0
   };
 
   // Set the player state and emit state to all players
@@ -99,12 +100,23 @@ function sendStates() {
 
 // Handles playerHit event
 function handlePlayerHit(playerId, laserId, socket) {
+  players[playerId].hp -= 5;
+  
   // Apply damage to player in all local states
-  io.emit("takeDamage", playerId, laserId);
+  io.emit("applyDamage", playerId, laserId);
+  players[socket.id].points += 5;
 
-  // If a player has 0 health
+  
+  // If the hurt player is dead now
   if (players[playerId].hp <= 0) {
-    socket.broadcast.emit("playerDead", playerId);
+    io.to(playerId).emit("gameOver");
     delete players[playerId];
+
+    players[socket.id].points += 250;
   }
+
+  // Update client's points
+  socket.emit("pointsUpdate", players[socket.id].points);
+  // Update player states
+  io.emit("playerStates", players);
 }
