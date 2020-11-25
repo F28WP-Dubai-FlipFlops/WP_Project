@@ -1,15 +1,14 @@
 const express = require("express");
 const dataparser = require('body-parser'); 
 const readDataParser = dataparser(); 
-
-
 const app = express();
+
 app.get("/", (req, res) => {
   res.sendFile(__dirname + "login.html");
 });
 
+//Creating a database connection
 var mysql = require('mysql');
-
 var con = mysql.createConnection ({
     host : 'sql12.freemysqlhosting.net',
     user : 'sql12378281',
@@ -22,8 +21,8 @@ con.connect(function (err) {
     console.log("Connected");
 });
 
-//Form authorization and taking user details from the client HTML (index.html)
-app.post('/auth', readDataParser, function(req, res){
+//Form authorization and taking user details from the client HTML (login-page.html)
+app.post('login', readDataParser, function(req, res){
  
     username = req.body.username;
     password = req.body.password;
