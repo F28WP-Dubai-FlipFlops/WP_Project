@@ -1,5 +1,5 @@
 {
-  "name": "wp_project",
+  "name": "mysql",
   "version": "1.0.0",
   "description": "A project to make a MMO browser game.",
   "main": "app.js",
@@ -21,6 +21,8 @@
   "homepage": "https://github.com/F28WP-Dubai-FlipFlops/WP_Project#readme",
   "dependencies": {
     "express": "^4.17.1",
+    "express-session": "^1.17.1",
+    "mysql": "^2.18.1",
     "socket.io": "^2.3.0"
   },
   "devDependencies": {
