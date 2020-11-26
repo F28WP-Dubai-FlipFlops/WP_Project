@@ -22,19 +22,15 @@ const saltRounds = 10;
 
 
 // Serve static files
-app.use(express.static("src"));
+app.use(express.static("client"));
 
 // Routes
 app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "/login-page.html"));
+  res.sendFile(path.join(__dirname, "/index.html"));
 });
 
 app.get("/play", (req, res) => {
-  res.sendFile(path.join(__dirname, "/src/game.html"));
-});
-
-app.get("/leaderboard", (req, res) => {
-  res.sendFile(path.join(__dirname, "/leaderboard.html"));
+  res.sendFile(path.join(__dirname, "/client/game.html"));
 });
 
 
