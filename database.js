@@ -32,7 +32,7 @@ app.post('/login', readDataParser, function(req, res){
     username = req.body.username;
     password = req.body.password;
 
-    //Username sanitization
+    //Username sanitization to allow only alphanumeric characters in the username
     username = username.replace(";","");
     username = username.replace("!","");
     username = username.replace("","");
@@ -80,7 +80,7 @@ app.post('/login', readDataParser, function(req, res){
                 //If passwords dont match, then error is shown to the user and login page restarts
                 else{
                     console.log("Wrong password entered");
-                    res.sendFile(__dirname + '/client/index.html')
+                    res.sendFile(__dirname + '/game/login-page.html')
                 }
             });
         }
@@ -102,7 +102,7 @@ app.post('/login', readDataParser, function(req, res){
                 console.log("1 record inserted");
             });
             //We jump to the game HTML
-            res.sendFile(__dirname + '/client/gamebegin.html');
+            res.sendFile(__dirname + '/game/login-page.html');
         }
     });
 });
