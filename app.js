@@ -1,25 +1,143 @@
-// Constants for importing libraries and setting up server and sockets
+// Constants for importing libraries and setting up server, database and sockets
+
+// Express server
 const express = require("express");
 const app = express();
 const path = require("path");
+
+// Socket.io
 const http = require("http");
 const server = http.createServer(app);
 const io = require("socket.io")(server);
 const port = process.env.PORT || 3000;
 
+// Database
+const mysql = require("mysql");
+const SQL = require("sql-template-strings");
+const bodyParser = require("body-parser"); 
 
-// Serve static files in the 'src' folder
+// Password hashing
+const bcrypt = require("bcrypt");
+const saltRounds = 10;
+
+
+// Serve static files
 app.use(express.static("src"));
 
-// Serve html file when user first connects to server
+// Routes
 app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "/login-page.html"));
+});
+
+app.get("/play", (req, res) => {
   res.sendFile(path.join(__dirname, "/src/game.html"));
+});
+
+app.get("/leaderboard", (req, res) => {
+  res.sendFile(path.join(__dirname, "/leaderboard.html"));
 });
 
 
 server.listen(port, () => {
   console.log("Server is listening on port " + port);
 });
+
+
+
+//Creating a database connection
+const con = mysql.createConnection ({
+  host : 'sql12.freemysqlhosting.net',
+  user : 'sql12378281',
+  password : '7nS8iX9Bav',
+  database : 'sql12378281'
+});
+
+con.connect(function (err) {
+  if (err) throw err;
+  console.log("Database connected");
+});
+
+// Body parser to read data from forms
+app.use(bodyParser.urlencoded({extended: true}));
+app.use(bodyParser.json());
+
+
+// Login/Register
+// References: 
+// [1] https://codeshack.io/basic-login-system-nodejs-express-mysql/
+// [2] https://medium.com/technoetics/handling-user-login-and-registration-using-nodejs-and-mysql-81b146e37419
+app.post('/login', function(req, res){
+  let username = req.body.username;
+  const password = req.body.password;
+
+  // Remove special characters from username
+  invalidChars = ";!#$%^&*()@={}<>:";
+  for (let i = 0; i < invalidChars.length; i++) {
+    username = username.replace(invalidChars[i] + "", "");
+  }
+
+  // Check if account exists
+  const usernameExists = (SQL `SELECT username from accounts WHERE username=${username};`);
+  con.query(usernameExists, async function(err, result){
+    if (err) throw err;
+
+    // If the account already exists, check password and login
+    if (result.length) {
+      // Get the stored password for the account
+      const getPassword = (SQL `SELECT * from accounts WHERE username=${username};`);
+      
+      con.query(getPassword, async function(err, result){
+        if (err) throw err;
+          
+        // Compare password hashes
+        const comparePasswords = await bcrypt.compare(password, result[0].password);
+
+        // If password was correct
+        if (comparePasswords) {
+          console.log("Logged in");
+          res.redirect("/play");
+        }
+        // Reload the page if the password was incorrect
+        else {
+          console.log("Wrong password");
+          res.redirect("/");
+        }
+      });
+    }
+
+    // If the account does not exist, create a new account
+    else {
+      // Hash password
+      const encryptedPassword = await bcrypt.hash(password, saltRounds);
+
+      //A new user is added to the table
+      const newUser = (SQL `INSERT INTO accounts VALUES(${username}, ${encryptedPassword});`);
+      con.query(newUser, function (err, result) {
+        if (err) throw err;
+
+        // Insert initial score in leaderboard table
+        const setInitialScore = (SQL `INSERT INTO leaderboard VALUES(${username}, 0);`);
+        con.query(setInitialScore, function(err, result) {
+            if (err) throw err;
+        });
+        
+        console.log("New account created");
+        // Redirect to game page
+        res.redirect("/play");
+      });
+    }
+  });
+});
+
+
+app.post("/loadScores", function(req, res) {
+  const getScores = (SQL `SELECT * FROM leaderboard ORDER BY highscore DESC LIMIT 5;`);
+  con.query(getScores, function(err, result) {
+    if (err) throw err;
+    res.send(result);
+  })
+});
+
 
 
 // Object to hold all player states
@@ -110,7 +228,7 @@ function handlePlayerHit(playerId, laserId, socket) {
   // If the hurt player is dead now
   if (players[playerId].hp <= 0) {
     io.to(playerId).emit("gameOver");
-    delete players[playerId];
+    setHighScore(playerId);
 
     players[socket.id].points += 250;
   }
@@ -119,4 +237,23 @@ function handlePlayerHit(playerId, laserId, socket) {
   socket.emit("pointsUpdate", players[socket.id].points);
   // Update player states
   io.emit("playerStates", players);
+}
+
+// Updates highscore of player if it is higher than last highscore
+function setHighScore(playerId) {
+  // Get current highscore
+  const getScore = (SQL `SELECT * FROM leaderboard WHERE username=${players[playerId].username};`);
+  con.query(getScore, function(err, result) {
+    if (!err) {
+      // If the current score is greater than the highscore, set it as the new highscore
+      if (players[playerId].score > result[0].highscore) {
+        const setScore = (SQL `UPDATE leaderboard 
+                           SET highscore=${players[playerId].score} 
+                           WHERE username=${players[playerId].username};`);
+        con.query(setScore, function(err, result) {});
+      }
+    }
+  });
+
+  delete players[playerId];
 }
