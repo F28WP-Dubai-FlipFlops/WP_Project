@@ -4,8 +4,10 @@ const readDataParser = dataparser();
 const app = express();
 
 app.get("/", (req, res) => {
-  res.sendFile(__dirname + "login.html");
+  res.sendFile(__dirname + "/game/login-page.html");
 });
+
+app.use(express.static("game"));
 
 //Creating a database connection
 var mysql = require('mysql');
@@ -27,7 +29,7 @@ app.post('login', readDataParser, function(req, res){
     username = req.body.username;
     password = req.body.password;
 
-    //Username sanitization
+    //Username sanitization to allow only alphanumeric characters in the username
     username = username.replace(";","");
     username = username.replace("!","");
     username = username.replace("","");
@@ -53,14 +55,14 @@ app.post('login', readDataParser, function(req, res){
     encryptedPassword += key.final('hex');
 
     //Checking if the username exists to prevent multiple users with same username
-    var usernameCheck = "SELECT * from login WHERE Username = '" + username + "';";
+    var usernameCheck = "SELECT * from login WHERE username = '" + username + "';";
     connection.query(usernameCheck, function(err, result){
         if (err) throw err;
 
         //If the user does exist
         if(result.length){
             //Checking if the username and password match
-            var passCheck = "SELECT * from login WHERE Password = '" + encryptedPassword + "';";
+            var passCheck = "SELECT * from login WHERE password = '" + encryptedPassword + "';";
             
             connection.query(passCheck, function(err, result){
                 if (err) throw err;
@@ -69,13 +71,13 @@ app.post('login', readDataParser, function(req, res){
                 if (result.length){
                     console.log("one exists");
                     //The game starts
-                    res.sendFile(__dirname + '/client/gamebegin.html');
+                    res.sendFile(__dirname + '/src/game.html');
                 }
 
                 //If passwords dont match, then error is shown to the user and login page restarts
                 else{
                     console.log("Wrong password entered");
-                    res.sendFile(__dirname + '/client/index.html')
+                    res.sendFile(__dirname + '/game/login-page.html')
                 }
             });
         }
@@ -85,13 +87,15 @@ app.post('login', readDataParser, function(req, res){
             console.log("none exists");
 
             //A new user is added to the table
-            var sql = "INSERT INTO login (Username, Password) VALUES ('"+ username +"','"+encryptedPassword+"');";
+            var sql = "INSERT INTO login (username, password) VALUES ('"+ username +"','"+encryptedPassword+"');";
             connection.query(sql, function (err, result) {
                 if (err) throw err;
                 console.log("1 record inserted");
             });
             //We jump to the game HTML
-            res.sendFile(__dirname + '/client/gamebegin.html');
+            res.sendFile(__dirname + '/src/game.html');
         }
     });
 });
+
+app.listen(3090);
