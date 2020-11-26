@@ -1,21 +1,25 @@
-create database GAME;
-use GAME;
-create table leaderboard (name varchar(20),username varchar(20),score int);
-create table login (username varchar(10),password varchar(20));
-show tables;
 
-alter table leaderboard add primary key(username);
-alter table login add primary key (username);
-alter table leaderboard add foreign key(username) references login(username);
+CREATE TABLE IF NOT EXISTS accounts (
+    username VARCHAR(10) NOT NULL, 
+    password VARCHAR(255) NOT NULL, 
+    PRIMARY KEY (username)
+) ENGINE=INNODB;
 
-insert into login values ("Varun2312","vs55");
-insert into login values ("Andrew3214","ap124");
-insert into login values ("Navin9011","ns125");
-insert into login values ("Gem7653","gd55");
+CREATE TABLE IF NOT EXISTS leaderboard (
+    username VARCHAR(10) NOT NULL, 
+    highscore INT NOT NULL, 
+    PRIMARY KEY (username), 
+    FOREIGN KEY (username) REFERENCES accounts(username)
+) ENGINE=INNODB:
 
-insert into leaderboard values ("Varun","Varun2312",200);
-insert into leaderboard values ("Andrew","Andrew3214",500);
-insert into leaderboard values ("Navin","Navin9011", 175);
-insert into leaderboard values ("Gem","Gem7653",900);
+INSERT INTO accounts VALUES("Varun2312", "vs55");
+INSERT INTO accounts VALUES("Andrew3214", "ap124");
+INSERT INTO accounts VALUES("Navin9011", "ns125");
+INSERT INTO accounts VALUES("Gem7653", "gd55");
+INSERT INTO accounts VALUES("test", "test");
 
-select * from leaderboard;
+INSERT INTO leaderboard VALUES("Varun2312", 200);
+INSERT INTO leaderboard VALUES("Andrew3214", 500);
+INSERT INTO leaderboard VALUES("Navin9011", 175);
+INSERT INTO leaderboard VALUES("Gem7653", 900);
+INSERT INTO leaderboard VALUES("test", 1200);

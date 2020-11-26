@@ -1,34 +1,71 @@
+// Constants for player size
+const playerWidth = 80;
+const playerHeight = 80;
+
+// Constant for max velocity
+const vMax = 2;
+
 // Class to represent player in javascript
-function Player(username, x, y) {
-  this.htmlElement = createPlayer(x, y);
-  this.nameTag = createNameTag(username, this.htmlElement);
-  this.parent = this.htmlElement.parentElement;
-  this.width = this.htmlElement.offsetWidth;
-  this.height = this.htmlElement.offsetHeight; 
+function Player(state) {
+  this.id = state.id;
+  this.username = state.username;
   
   this.position = {
-    x: x, 
-    y: y
+    x: state.pos.x, 
+    y: state.pos.y
   };
   
   this.velocity = {
-    x: 0, 
-    y: 0
+    x: state.vel.x, 
+    y: state.vel.y
   };
 
-  this.vMax = 2;
-  this.aimAngle = 0;
-  this.canShoot = true;
+  this.aimAngle = state.aimAngle;
+  this.canShoot = state.canShoot;
+  this.hp = state.hp;
+  this.points = state.points;
+
+  
+  // Returns a state object for the player
+  this.getState = function() {
+    return {
+      id: this.id, 
+      username: this.username, 
+      pos: {x: this.position.x, y: this.position.y}, 
+      vel: {x: this.velocity.x, y: this.velocity.y}, 
+      aimAngle: this.aimAngle, 
+      canShoot: this.canShoot, 
+      hp: this.hp, 
+      points: this.points
+    }
+  };
+
+  // Sets the state of the player
+  this.setState = function(state) {
+    this.id = state.id;
+    this.username = state.username;
+    
+    this.position.x = state.pos.x; 
+    this.position.y = state.pos.y;
+    
+    this.velocity.x = state.vel.x; 
+    this.velocity.y = state.vel.y;
+
+    this.aimAngle = state.aimAngle;
+    this.canShoot = state.canShoot;
+    this.hp = state.hp;
+    this.points = state.points;
+  }
 
   // Gets x value of centre of player div
   this.getCentreX = function() {
-    return this.position.x + this.width / 2;
-  }
+    return this.position.x + playerWidth / 2;
+  };
 
   // Gets y value of centre of player div
   this.getCentreY = function() {
-    return this.position.y + this.height / 2;
-  }
+    return this.position.y + playerHeight / 2;
+  };
 
   // Ensures player stays within edges of the screen
   this.keepWithinBounds = function() {
@@ -36,8 +73,8 @@ function Player(username, x, y) {
     if (this.position.x < 0) {
       this.position.x = 0;
       this.velocity.x = 0;
-    } else if (this.position.x + this.width > this.parent.offsetWidth) {
-      this.position.x = this.parent.offsetWidth - this.width;
+    } else if (this.position.x + playerWidth > mapWidth) {
+      this.position.x = mapWidth - playerWidth;
       this.velocity.x = 0;
     }
 
@@ -45,8 +82,8 @@ function Player(username, x, y) {
     if (this.position.y < 0) {
       this.position.y = 0;
       this.velocity.y = 0;
-    } else if (this.position.y + this.height + 20 > this.parent.offsetHeight) {
-      this.position.y = this.parent.offsetHeight - this.height - 20;
+    } else if (this.position.y + playerHeight + 20 > mapHeight) {
+      this.position.y = mapHeight - playerHeight - 20;
       this.velocity.y = 0;
     }
   };
@@ -73,26 +110,22 @@ function Player(username, x, y) {
     
     this.aimAngle = angle_rad;
   };
-  
-  // Updates position of html divs holding the player and name tag
-  this.updatePos = function() {
-    // Move player on the game screen
-    this.htmlElement.style.left = this.position.x + "px";
-    this.htmlElement.style.top = this.position.y + "px";
-
-    // Rotate player
-    this.htmlElement.style.transform = "rotate(" + this.aimAngle + "rad)";
-
-    // Move name tag on the game screen
-    this.nameTag.style.left = (this.getCentreX() 
-                              - (this.nameTag.offsetWidth / 2)) + "px";
-    this.nameTag.style.top = (this.position.y + this.height) + "px";
-  };
 
   // Calculate new position of player
-  this.move = function(dx, dy) {
+  this.move = function(controllerState, deltaTime) {
+    // Apply controls on player
+    let dx = 0;
+    let dy = 0;
+    
+    // Calculate change in velocity based on key presses
+    if (controllerState.left) dx += -1 * deltaTime;
+    if (controllerState.right) dx += 1 * deltaTime;
+    
+    if (controllerState.up) dy += -1 * deltaTime;
+    if (controllerState.down) dy += 1 * deltaTime;
+
     // Increase velocity of velocity is less than vMax   
-    if (Math.sqrt((this.velocity.x ** 2) + (this.velocity.y ** 2)) <= this.vMax) {
+    if (Math.sqrt((this.velocity.x ** 2) + (this.velocity.y ** 2)) <= vMax) {
       this.velocity.x += dx * 0.15;
       this.velocity.y += dy * 0.15;
     }
@@ -105,74 +138,14 @@ function Player(username, x, y) {
     this.velocity.y *= 0.98;
 
     this.keepWithinBounds();
-    this.updatePos();
   };
 
-  // Create a new laser div
-  this.shoot = function() {
-    // Shoot a laser if cooldown is off
-    if (this.canShoot) {
-      let shot = document.createElement("div");
-      shot.setAttribute("class", "laser");
-      shot.style.transform = "rotate(" + this.aimAngle + "rad)";
-      gameScreen.appendChild(shot);
+  // Applies a shoot cooldown on the player
+  this.applyShootCooldown = function() {
+    this.canShoot = false;
 
-      laserShots.push(new Laser(this, shot));
-
-      // Reset cooldown
-      this.canShoot = false;
-      setTimeout(() => {
-        this.canShoot = true;
-      }, 1000);
-    }
-  };
-
-  // Calculates player health and points when hit
-  this.takeDamage = function() {
-    // Play an animation by adding a class to player div
-    this.htmlElement.setAttribute("class", "player damage");
-
-    // Remove the animation class after animation is over
     setTimeout(() => {
-      this.htmlElement.setAttribute("class", "player");
-    }, 300);
+      this.canShoot = true;
+    }, 1500);
   };
 }
-
-// (Temp.) Array with file names for spaceship images
-const playerImg = ["spaceship1.png", 
-                   "spaceship2.png", 
-                   "spaceship3.png", 
-                   "spaceship4.png"];
-
-// Create a new div to represent player object
-let createPlayer = function(x, y) {
-  let player = document.createElement("div");
-  player.setAttribute("class", "player");
-
-  // (Temp.) Set player image randomly
-  let imgColor = Math.floor(Math.random() * playerImg.length);
-  player.style.backgroundImage = "url(../spaceships/" + playerImg[imgColor] + ")";
-  
-  // Set position of player div and add to html
-  player.style.left = x + "px";
-  player.style.top = y + "px";
-  gameScreen.appendChild(player);
-
-  return player;
-};
-
-// Create a new div to hold player's name tag
-let createNameTag = function(username, player) {
-  let nameTag = document.createElement("div");
-  nameTag.setAttribute("class", "username");
-  nameTag.innerHTML = username;
-
-  // Centre name tag and set its position 5px below player
-  nameTag.style.left = (player.offsetLeft + (player.offsetWidth / 2) 
-                        - (nameTag.offsetWidth / 2)) + "px";
-  nameTag.style.top = (player.offsetTop + player.offsetHeight) + "px";
-  gameScreen.appendChild(nameTag);
-
-  return nameTag;
-};

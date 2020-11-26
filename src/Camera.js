@@ -23,6 +23,10 @@ function Camera(cameraDiv, map, player) {
   
   // Moves the camera
   this.moveCamera = function() {
+    // Reset camera width and height in case screen size changed
+    this.width = this.camera.offsetWidth; 
+    this.height = this.camera.offsetHeight;
+
     // Get new camera position
     this.position.x = this.getCamX();
     this.position.y = this.getCamY();
