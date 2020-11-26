@@ -21,6 +21,8 @@
   "homepage": "https://github.com/F28WP-Dubai-FlipFlops/WP_Project#readme",
   "dependencies": {
     "express": "^4.17.1",
+    "express-session": "^1.17.1",
+    "mysql": "^2.18.1",
     "socket.io": "^2.3.0"
   },
   "devDependencies": {
