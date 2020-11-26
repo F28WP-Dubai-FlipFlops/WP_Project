@@ -22,15 +22,15 @@ const saltRounds = 10;
 
 
 // Serve static files
-app.use(express.static("client"));
+app.use(express.static(__dirname + "/client"));
 
 // Routes
 app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "/index.html"));
+  res.sendFile(path.join(__dirname, "/client/views/index.html"));
 });
 
 app.get("/play", (req, res) => {
-  res.sendFile(path.join(__dirname, "/client/game.html"));
+  res.sendFile(path.join(__dirname, "/client/views/game.html"));
 });
 
 
@@ -204,7 +204,7 @@ function handlePlayerJoin(username, socket) {
 function sendStates() {
   const emitInterval = setInterval(() => {
     io.emit("playerStates", players);
-  }, 100);
+  }, 1000 / 30);
 
   // If there are no players left in the game, stop emitting
   if (Object.keys(players).length === 0) {
